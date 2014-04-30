@@ -2,6 +2,7 @@
 
 static Window *window;
 static Layer *window_layer;
+static Layer *time_layer;
 
 static GBitmap *background_image;
 static BitmapLayer *background_layer;
@@ -120,7 +121,7 @@ static void update_days(struct tm *tick_time) {
 
   //DAY NUMBER
   set_container_image(&date_digits_images[0], date_digits_layers[0], DATENUM_IMAGE_RESOURCE_IDS[tick_time->tm_mday/10], GPoint(116, 7));
-  set_container_image(&date_digits_images[1], date_digits_layers[1], DATENUM_IMAGE_RESOURCE_IDS[tick_time->tm_mday%10], GPoint(128, 7));
+  set_container_image(&date_digits_images[1], date_digits_layers[1], DATENUM_IMAGE_RESOURCE_IDS[tick_time->tm_mday%10], GPoint(130, 7));
 
   //YEAR
   unsigned int display_year = get_display_year(tick_time->tm_year);
@@ -150,15 +151,17 @@ static void update_hours(struct tm *tick_time) {
   if (!clock_is_24h_style()) {
     if (display_hour/10 == 0) {
       layer_set_hidden(bitmap_layer_get_layer(time_digits_layers[0]), true);
+	  layer_set_frame(time_layer, GRect(-18, 0, 144, 168));
     }
     else {
       layer_set_hidden(bitmap_layer_get_layer(time_digits_layers[0]), false);
+	  layer_set_frame(time_layer, GRect(0, 0, 144, 168));
     }
   }
 }
 static void update_minutes(struct tm *tick_time) {
-  set_container_image(&time_digits_images[2], time_digits_layers[2], BIG_DIGIT_IMAGE_RESOURCE_IDS[tick_time->tm_min/10], GPoint(81, 68));
-  set_container_image(&time_digits_images[3], time_digits_layers[3], BIG_DIGIT_IMAGE_RESOURCE_IDS[tick_time->tm_min%10], GPoint(112, 68));
+  set_container_image(&time_digits_images[2], time_digits_layers[2], BIG_DIGIT_IMAGE_RESOURCE_IDS[tick_time->tm_min/10], GPoint(81, 70));
+  set_container_image(&time_digits_images[3], time_digits_layers[3], BIG_DIGIT_IMAGE_RESOURCE_IDS[tick_time->tm_min%10], GPoint(112, 70));
 }
 static void update_seconds(struct tm *tick_time) {
 	layer_set_hidden(bitmap_layer_get_layer(colon_layer), tick_time->tm_sec%2);
@@ -200,6 +203,10 @@ static void init(void) {
   background_layer = bitmap_layer_create(layer_get_frame(window_layer));
   bitmap_layer_set_bitmap(background_layer, background_image);
   layer_add_child(window_layer, bitmap_layer_get_layer(background_layer));
+	
+  //TIMELAYER
+  time_layer = layer_create(layer_get_frame(window_layer));
+  layer_add_child(window_layer, time_layer);
  	
   //DIVIDER
   div_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIV);
@@ -214,23 +221,23 @@ static void init(void) {
   //COLON
   colon_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_COLON);
   frame = (GRect) {
-    .origin = { .x = 70, .y = 81 },
+    .origin = { .x = 70, .y = 77 },
     .size = colon_image->bounds.size
   };
   colon_layer = bitmap_layer_create(frame);
   bitmap_layer_set_bitmap(colon_layer, colon_image);
-  layer_add_child(window_layer, bitmap_layer_get_layer(colon_layer)); 
+  layer_add_child(time_layer, bitmap_layer_get_layer(colon_layer)); 
 
-    day_name_layer = bitmap_layer_create(dummy_frame);
-    layer_add_child(window_layer, bitmap_layer_get_layer(day_name_layer));	
+  day_name_layer = bitmap_layer_create(dummy_frame);
+  layer_add_child(window_layer, bitmap_layer_get_layer(day_name_layer));	
 
-    month_name_layer = bitmap_layer_create(dummy_frame);
-    layer_add_child(window_layer, bitmap_layer_get_layer(month_name_layer));	
+  month_name_layer = bitmap_layer_create(dummy_frame);
+  layer_add_child(window_layer, bitmap_layer_get_layer(month_name_layer));	
 	
   //TIME
   for (int i = 0; i < TOTAL_TIME_DIGITS; ++i) {
     time_digits_layers[i] = bitmap_layer_create(dummy_frame);
-    layer_add_child(window_layer, bitmap_layer_get_layer(time_digits_layers[i]));
+    layer_add_child(time_layer, bitmap_layer_get_layer(time_digits_layers[i]));
   }
   
   //DATE
@@ -306,6 +313,7 @@ static void deinit(void) {
 	year_digits_layers[i] = NULL;
   }
 	
+  layer_destroy(time_layer);
   layer_destroy(window_layer);
 
 }
